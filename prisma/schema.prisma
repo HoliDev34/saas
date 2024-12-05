@@ -1,0 +1,72 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Supplier {
+  id             String    @id @default(cuid())
+  companyName    String
+  contactName    String
+  email          String
+  phone          String
+  commands       Command[]
+  lastCommandDate DateTime?
+}
+
+model Command {
+  id          String   @id @default(cuid())
+  date        DateTime
+  amount      Float
+  status      String
+  description String
+  supplierId  String
+  supplier    Supplier   @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Formula {
+  id                String       @id @default(cuid())
+  name              String
+  superfat         Float       @default(0)
+  fabricationLosses Float       @default(0)
+  cureLosses        Float       @default(0)
+  packagingCost     Float       @default(0)
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  ingredients       FormulaIngredient[]
+
+  @@map("formulas")
+}
+
+model Ingredient {
+  id          String       @id @default(cuid())
+  name        String      @unique
+  formulas    FormulaIngredient[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@map("ingredients")
+}
+
+model FormulaIngredient {
+  id          String     @id @default(cuid())
+  formulaId   String
+  ingredientId String
+  quantity    Float
+  percentage  Float
+  formula     Formula    @relation(fields: [formulaId], references: [id], onDelete: Cascade)
+  ingredient  Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@unique([formulaId, ingredientId])
+  @@map("formula_ingredients")
+}
